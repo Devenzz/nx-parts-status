@@ -858,6 +858,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
       dlg = res.value;
       dlg.addEventHandler(Office.EventType.DialogMessageReceived, (m) => {
         if (m.message === "ready") sendToDialog();
+        else if (m.message === "nols") sendToDialog("msg");
         else if (m.message === "refresh") refreshData();
       });
       dlg.addEventHandler(Office.EventType.DialogEventReceived, () => {
@@ -865,15 +866,75 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
       });
     });
   }
-  function sendToDialog() {
-    if (!dlg || !lastSheets) return;
-    const s = JSON.stringify({ sheets: lastSheets, img: IMG, stamp: $("upd").textContent }), size = 24e3, n = Math.ceil(s.length / size), id = Date.now();
+  const LSK = "nx-payload";
+  function lsSet(obj) {
     try {
-      for (let i = 0; i < n; i++) dlg.messageChild(JSON.stringify({ id, i, n, s: s.slice(i * size, (i + 1) * size) }));
+      localStorage.setItem(LSK, JSON.stringify(obj));
+      return true;
     } catch (e) {
+      try {
+        localStorage.removeItem(LSK);
+      } catch (_) {
+      }
+      return false;
     }
   }
+  function lsGet() {
+    try {
+      const s = localStorage.getItem(LSK);
+      return s ? JSON.parse(s) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function sendChunks(obj) {
+    const s = JSON.stringify(obj), size = 12e3, n = Math.ceil(s.length / size), id = Date.now() + Math.random();
+    for (let i = 0; i < n; i++) {
+      try {
+        dlg.messageChild(JSON.stringify({ t: "c", id, i, n, s: s.slice(i * size, (i + 1) * size) }));
+      } catch (e) {
+      }
+    }
+  }
+  let lastVer = 0;
+  function sendToDialog(mode) {
+    if (!lastSheets) return;
+    const stamp = $("upd").textContent, v = Date.now();
+    lastVer = v;
+    const okLS = lsSet({ v, sheets: lastSheets, img: IMG, stamp }) || lsSet({ v, sheets: lastSheets, img: {}, stamp, noimg: true });
+    if (!dlg) return;
+    if (okLS && mode !== "msg") {
+      try {
+        dlg.messageChild(JSON.stringify({ t: "ls", v }));
+      } catch (e) {
+      }
+      return;
+    }
+    sendChunks({ t: "data", sheets: lastSheets, stamp });
+    Object.keys(IMG).forEach((k) => sendChunks({ t: "img", k, u: IMG[k] }));
+  }
   const buf = {};
+  let gotVer = 0, readyTimer = null;
+  function applyPayload(d) {
+    if (d.img) IMG = Object.assign({}, IMG, d.img);
+    loadSheets(d.sheets, String(d.stamp || "").replace("Last Updated: ", ""));
+    paintImages();
+    clearInterval(readyTimer);
+    readyTimer = null;
+    const rb = $("refBtn");
+    rb.classList.remove("spin");
+    rb.disabled = false;
+    $("toast").hidden = true;
+  }
+  function readLS(v) {
+    const d = lsGet();
+    if (d && d.sheets && (!v || d.v >= v) && d.v !== gotVer) {
+      gotVer = d.v;
+      applyPayload(d);
+      return true;
+    }
+    return !!(d && d.v === gotVer && gotVer);
+  }
   function onParentMsg(arg) {
     let m;
     try {
@@ -881,6 +942,11 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     } catch (e) {
       return;
     }
+    if (m.t === "ls") {
+      if (!readLS(m.v)) Office.context.ui.messageParent("nols");
+      return;
+    }
+    if (m.t !== "c") return;
     const b = buf[m.id] = buf[m.id] || { c: [], k: 0 };
     if (b.c[m.i] == null) {
       b.c[m.i] = m.s;
@@ -889,13 +955,11 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     if (b.k === m.n) {
       const d = JSON.parse(b.c.join(""));
       delete buf[m.id];
-      IMG = d.img || {};
-      loadSheets(d.sheets, d.stamp.replace("Last Updated: ", ""));
-      paintImages();
-      const rb = $("refBtn");
-      rb.classList.remove("spin");
-      rb.disabled = false;
-      $("toast").hidden = true;
+      if (d.t === "data") applyPayload({ sheets: d.sheets, stamp: d.stamp });
+      else if (d.t === "img") {
+        IMG[d.k] = d.u;
+        paintImages();
+      }
     }
   }
   __unboot();
@@ -911,7 +975,27 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
         toast("Refreshing Data...");
         Office.context.ui.messageParent("refresh");
       };
-      Office.context.ui.addHandlerAsync(Office.EventType.DialogParentMessageReceived, onParentMsg, () => Office.context.ui.messageParent("ready"));
+      addEventListener("storage", (e) => {
+        if (e.key === LSK) readLS();
+      });
+      readLS();
+      const ping = () => {
+        try {
+          Office.context.ui.messageParent("ready");
+        } catch (e) {
+        }
+      };
+      Office.context.ui.addHandlerAsync(Office.EventType.DialogParentMessageReceived, onParentMsg, () => ping());
+      let tries = 0;
+      readyTimer = setInterval(() => {
+        if (++tries > 20) {
+          clearInterval(readyTimer);
+          if (!gotVer && !started) banner("The full screen window did not receive data from Excel. Close it and use the side panel, or press Open full screen again.", true);
+          return;
+        }
+        readLS();
+        ping();
+      }, 2e3);
     } else if (info && info.host === Office.HostType.Excel) {
       $("refBtn").onclick = refreshData;
       const canBig = Office.context.requirements.isSetSupported("DialogApi", "1.2");
