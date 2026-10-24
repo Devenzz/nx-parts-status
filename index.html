@@ -89,8 +89,7 @@ h1{font:700 32px/1.02 var(--f-num);letter-spacing:.03em;margin:6px 0 2px;text-wr
 @keyframes spin{to{transform:rotate(360deg)}}
 .toast{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:80;padding:10px 14px;border-radius:8px;font:600 13px var(--f-ui);box-shadow:0 6px 24px rgba(0,0,0,.18);background:var(--band);color:var(--band-ink);max-width:calc(100% - 32px)}
 .toast.ok{background:var(--good);color:#fff}.toast.err{background:var(--bad);color:#fff}
-.filters{background:var(--surface);border-bottom:1px solid var(--line);box-shadow:var(--shadow);position:sticky;top:env(safe-area-inset-top,0px);z-index:30}
-.filters .wrap{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-end;padding-block:10px}
+.fbar{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-end}
 .fld{display:flex;flex-direction:column;gap:3px;min-width:0}
 .fld label,.lbl{font:500 10.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .fld select,.fld input,.ctl{font:500 13px var(--f-ui);color:var(--ink);background:var(--surface-2);border:1px solid var(--line-2);border-radius:7px;padding:5px 8px;height:32px;max-width:100%}
@@ -117,7 +116,7 @@ main.wrap{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;p
 .ph{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .note{font-size:12px;color:var(--muted);margin:0}
 .chart{position:relative;height:280px}
-.kpis{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpis{grid-column:1/-1;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 16px;display:flex;flex-direction:column;gap:3px;min-width:0;box-shadow:var(--shadow);text-align:left;color:inherit;font:inherit}
 button.kpi{cursor:pointer}button.kpi:hover{border-color:var(--accent)}
 .kpi[aria-pressed="true"]{outline:2px solid var(--accent);outline-offset:-1px}
@@ -175,7 +174,7 @@ details.hid[open] summary::before{content:"▾ "}
 .kv div:nth-child(odd){color:var(--muted);font:500 11px var(--f-mono);text-transform:uppercase;letter-spacing:.05em;background:var(--surface-2);display:flex;align-items:center}
 body.cust .internal{display:none!important}
 @media (max-width:1150px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.c8,.c7,.c6,.c5,.c4{grid-column:span 12}.pipe{grid-template-columns:repeat(2,minmax(0,1fr))}.pipe button{border-bottom:1px solid var(--line)}}
-@media (max-width:640px){.wrap{padding-inline:16px}.filters{position:static}.hdr-r{align-items:flex-start}.hdr-btns{justify-content:flex-start}.upd{text-align:left}h1{font-size:24px}.kpi .v{font-size:26px}
+@media (max-width:640px){.wrap{padding-inline:16px}.hdr-r{align-items:flex-start}.hdr-btns{justify-content:flex-start}.upd{text-align:left}h1{font-size:24px}.kpi .v{font-size:26px}
   .fld{flex:1 1 44%}.fld select,.fld input,.gs input{width:100%}.kv{grid-template-columns:120px 1fr}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -194,18 +193,7 @@ body.cust .internal{display:none!important}
   </div>
 </div></header>
 
-<section class="filters" aria-label="Filters"><div class="wrap">
-  <div class="fld gs"><label for="q">Search</label><input type="search" id="q" class="ctl" placeholder="Part no, description, PO, tracking…"></div>
-  <div class="fld"><label>Project</label><div class="seg" id="proj"><button type="button" data-v="All" aria-pressed="true">All</button><button type="button" data-v="Earth Truss" aria-pressed="false">Earth Truss</button><button type="button" data-v="Anchor" aria-pressed="false">Anchor</button></div></div>
-  <div class="fld"><label for="f-ps">Part status</label><select id="f-ps"></select></div>
-  <div class="fld"><label for="f-stage">Stage</label><select id="f-stage"></select></div>
-  <div class="fld"><label for="f-del">Delivery</label><select id="f-del"></select></div>
-  <div class="fld"><label for="f-po">PO</label><select id="f-po"><option value="All">All</option><option value="yes">PO received</option><option value="no">No PO</option></select></div>
-  <div class="fld"><label for="f-from">Readiness from</label><input type="date" id="f-from"></div>
-  <div class="fld"><label for="f-to">Readiness to</label><input type="date" id="f-to"></div>
-  <button class="btn" id="clear" type="button">Clear All Filters</button>
-  <div class="summary" id="summary"></div>
-</div></section>
+
 
 <main class="wrap" id="main">
   <div class="banner" id="banner" hidden></div>
@@ -220,6 +208,24 @@ body.cust .internal{display:none!important}
   <section class="panel c5"><h2>Project summary</h2><div class="tbl" id="tProj"></div>
     <h2 style="margin-top:4px">Delivery</h2>
     <div class="chart" style="height:170px"><canvas id="chDel" aria-label="Rows by delivery status"></canvas></div></section>
+
+  <section class="panel c7"><h2>Dispatch trend <small>sample lots dispatched per month (date from Recent Status)</small></h2>
+    <div class="legend"><span><b style="background:var(--p1)"></b>Earth Truss</span><span><b style="background:var(--p2)"></b>Anchor</span></div>
+    <div class="chart" style="height:250px"><canvas id="chMonth" aria-label="Dispatches per month"></canvas></div></section>
+  <section class="panel c5"><h2>Earth Truss vs Anchor <small>key counts side by side</small></h2>
+    <div class="legend"><span><b style="background:var(--p1)"></b>Earth Truss</span><span><b style="background:var(--p2)"></b>Anchor</span></div>
+    <div class="chart" style="height:250px"><canvas id="chCmp" aria-label="Project comparison"></canvas></div></section>
+
+<section class="filters panel c12" id="filters" aria-label="Filters"><h2>Filters <small>apply to every KPI, chart and table above and below</small></h2><div class="fbar">
+  <div class="fld gs"><label for="q">Search</label><input type="search" id="q" class="ctl" placeholder="Part no, description, PO, tracking…"></div>
+  <div class="fld"><label>Project</label><div class="seg" id="proj"><button type="button" data-v="All" aria-pressed="true">All</button><button type="button" data-v="Earth Truss" aria-pressed="false">Earth Truss</button><button type="button" data-v="Anchor" aria-pressed="false">Anchor</button></div></div>
+  <div class="fld"><label for="f-ps">Part status</label><select id="f-ps"></select></div>
+  <div class="fld"><label for="f-stage">Stage</label><select id="f-stage"></select></div>
+  <div class="fld"><label for="f-del">Delivery</label><select id="f-del"></select></div>
+  <div class="fld"><label for="f-po">PO</label><select id="f-po"><option value="All">All</option><option value="yes">PO received</option><option value="no">No PO</option></select></div>
+  <button class="btn" id="clear" type="button">Clear All Filters</button>
+  <div class="summary" id="summary"></div>
+</div></section>
 
   <section class="panel c6"><h2>Recent dispatches <small>last 60 days, newest first</small></h2><div class="tbl scroll" id="tRecent" style="max-height:340px"></div></section>
   <section class="panel c6"><h2>Upcoming sample readiness <small>not yet dispatched · by readiness date</small></h2><div class="tbl scroll" id="tUp" style="max-height:340px"></div></section>
@@ -263,7 +269,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 (function() {
   "use strict";
   const EMBED = null;
-  const MODE = new URLSearchParams(location.search).get("mode") === "dialog" ? "dialog" : "main";
+  const MODE = /* @__PURE__ */ ((q) => q === "dialog" || q === "tab" ? q : "main")(new URLSearchParams(location.search).get("mode"));
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s != null ? s : "").replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[m]);
   const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -312,7 +318,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
   }
   function filtered(skip) {
     const q = F.q.trim().toLowerCase();
-    return DATA.filter((r) => (F.proj === "All" || r.project === F.proj) && (skip === "ps" || F.ps === "All" || r.ps === F.ps) && (skip === "stage" || F.stage === "All" || r.stage === F.stage) && (skip === "del" || F.del === "All" || r.del === F.del) && (F.po === "All" || F.po === "yes" === r.hasPO) && (!F.from || r.ready && r.ready >= F.from) && (!F.to || r.ready && r.ready <= F.to) && (!q || r.s.includes(q)));
+    return DATA.filter((r) => (F.proj === "All" || r.project === F.proj) && (skip === "ps" || F.ps === "All" || r.ps === F.ps) && (skip === "stage" || F.stage === "All" || r.stage === F.stage) && (skip === "del" || F.del === "All" || r.del === F.del) && (F.po === "All" || F.po === "yes" === r.hasPO) && (!q || r.s.includes(q)));
   }
   function fillSelects() {
     const psList = [...NXP.PS.filter((p) => DATA.some((r) => r.ps === p)), ...[...new Set(DATA.map((r) => r.ps))].filter((p) => !NXP.PS.includes(p))];
@@ -326,8 +332,6 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     opt("f-stage", PIPE.filter((s) => DATA.some((r) => r.stage === s)).concat(DATA.some((r) => r.stage === "Not set") ? ["Not set"] : []), "stage");
     opt("f-del", DELS.filter((s) => DATA.some((r) => r.del === s)), "del");
     $("f-po").value = F.po;
-    $("f-from").value = F.from;
-    $("f-to").value = F.to;
     $("q").value = F.q;
     $("proj").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.v === F.proj));
   }
@@ -349,7 +353,6 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     if (F.q) c.push(["q", "Search", F.q]);
     for (const k in L) if (F[k] !== "All") c.push([k, L[k], F[k]]);
     if (F.po !== "All") c.push(["po", "PO", F.po === "yes" ? "PO received" : "No PO"]);
-    if (F.from || F.to) c.push(["date", "Readiness", `${F.from ? fmtD(F.from) : "start"} to ${F.to ? fmtD(F.to) : "end"}`]);
     $("summary").innerHTML = "<b>Viewing:</b> " + (c.length ? c.map(([k, l, v]) => `<button class="chip" type="button" data-k="${k}"><span>${l}:</span>${esc(v)} \u2715</button>`).join("") : '<span class="chip fixed">All visible rows \xB7 Earth Truss + Anchor</span>');
     $("summary").querySelectorAll("button.chip").forEach((b) => b.onclick = () => {
       const k = b.dataset.k;
@@ -426,9 +429,10 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     const L = filtered(), n = L.length, uniq = new Set(L.map((r) => r.pn)).size;
     const cnt = (f) => L.filter(f).length;
     const disp = cnt((r) => r.del === "Dispatched"), reg = cnt((r) => r.del === "Regular production"), ready = cnt((r) => r.del === "Ready for dispatch"), hold = cnt((r) => r.del === "Hold"), notd = cnt((r) => r.del === "Not dispatched");
+    const overdue = cnt((r) => r.ready && r.ready < todayStr && r.del === "Not dispatched" && r.stage !== "Revised / Discontinued");
     const appr = cnt((r) => r.stage === "Approved for production"), ppap = cnt((r) => r.stage === "PPAP"), samp = cnt((r) => r.stage === "Sample" || r.stage === "Development"), disc = cnt((r) => r.stage === "Revised / Discontinued");
-    const k = (lab, val, sub, c, act, cls = "") => `<${act ? 'button type="button"' : "div"} class="kpi ${cls}" ${act ? `data-act="${act}" aria-pressed="${act === "del:" + F.del || act === "stage:" + F.stage}"` : ""} style="${c ? `--c:var(${c})` : ""}"><div class="k">${c ? "<i></i>" : ""}${lab}</div><div class="v">${N0(val)}</div><div class="s">${sub || "&nbsp;"}</div></${act ? "button" : "div"}>`;
-    $("kpis").innerHTML = k("Total sample lots", n, `${N0(uniq)} unique part numbers \xB7 ${N0(HID.length)} hidden rows not counted`, "", "", "hero") + k("Dispatched", disp + reg, `${P(disp + reg, n)} of lots${reg ? ` \xB7 ${reg} under regular production` : ""}`, "--good", "del:Dispatched") + k("Ready for dispatch", ready, "waiting to ship", "--info", "del:Ready for dispatch") + k("Hold", hold, "dispatch on hold", "--warn", "del:Hold") + k("Not dispatched yet", notd, "in development or awaiting sample", "--g1", "del:Not dispatched") + k("PPAP approved", appr, `${P(appr, n)} \xB7 approved for production`, "--g4", "stage:Approved for production") + k("PPAP pending", ppap, "run, submission or approval pending", "--g3", "stage:PPAP") + k("PO received", cnt((r) => r.hasPO), `${N0(cnt((r) => !r.hasPO))} lots without PO`, "--accent", "po");
+    const k = (lab, val, sub, c, act, cls = "") => `<${act ? 'button type="button"' : "div"} class="kpi ${cls}" ${act ? `data-act="${act}" aria-pressed="${act === "del:" + F.del || act === "stage:" + F.stage || act === "ps:" + F.ps}"` : ""} style="${c ? `--c:var(${c})` : ""}"><div class="k">${c ? "<i></i>" : ""}${lab}</div><div class="v">${N0(val)}</div><div class="s">${sub || "&nbsp;"}</div></${act ? "button" : "div"}>`;
+    $("kpis").innerHTML = k("Total sample lots", n, `${N0(uniq)} unique part numbers \xB7 ${N0(HID.length)} hidden rows not counted`, "", "", "hero") + k("Dispatched", disp + reg, `${P(disp + reg, n)} of lots${reg ? ` \xB7 ${reg} under regular production` : ""}`, "--good", "del:Dispatched") + k("Ready for dispatch", ready, "waiting to ship", "--info", "del:Ready for dispatch") + k("Hold", hold, "dispatch on hold", "--warn", "del:Hold") + k("Not dispatched yet", notd, "in development or awaiting sample", "--g1", "del:Not dispatched") + k("PPAP approved", appr, `${P(appr, n)} \xB7 approved for production`, "--g4", "stage:Approved for production") + k("PPAP pending", ppap, "run, submission or approval pending", "--g3", "stage:PPAP") + k("PO received", cnt((r) => r.hasPO), `${N0(cnt((r) => !r.hasPO))} lots without PO`, "--accent", "po") + k("Unique parts", uniq, "distinct part numbers in view", "--p1", "") + k("Sample under development", cnt((r) => r.ps === "Sample Under Development"), "not yet submitted", "--g1", "ps:Sample Under Development") + k("PPAP submission pending", cnt((r) => r.ps === "PPAP Submission Pending"), "PPAP to be submitted", "--g3", "ps:PPAP Submission Pending") + k("Overdue readiness", overdue, "readiness date passed, not dispatched", "--bad", "");
     $("kpis").querySelectorAll("button.kpi").forEach((b) => b.onclick = () => {
       const a = b.dataset.act;
       if (a === "po") setF("po", "yes", true);
@@ -469,6 +473,45 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     const dl = DELS.filter((d) => DATA.some((r) => r.del === d));
     const dcol = { "Dispatched": "--good", "Ready for dispatch": "--info", "Hold": "--warn", "Regular production": "--g4", "Not dispatched": "--g1" };
     hbar("chDel", dl, [{ label: "Lots", data: dl.map((d) => LD.filter((r) => r.del === d).length), backgroundColor: dl.map((d) => F.del === "All" || F.del === d ? css(dcol[d]) : css("--line-2")) }], (i) => setF("del", dl[i], true));
+    const mm = {};
+    L.filter((r) => r.dDate).forEach((r) => {
+      const m = r.dDate.slice(0, 7);
+      (mm[m] = mm[m] || { et: 0, an: 0 })[r.project === "Anchor" ? "an" : "et"]++;
+    });
+    const mk_ = Object.keys(mm).sort().slice(-12);
+    const ink2 = css("--ink-2"), line = css("--line"), muted = css("--muted");
+    mk("chMonth", {
+      type: "bar",
+      data: { labels: mk_.map((m) => MON[+m.slice(5) - 1] + " " + m.slice(2, 4)), datasets: [
+        { label: "Earth Truss", data: mk_.map((m) => mm[m].et), backgroundColor: css("--p1"), borderRadius: 3, maxBarThickness: 34, borderColor: css("--surface"), borderWidth: { top: 1 } },
+        { label: "Anchor", data: mk_.map((m) => mm[m].an), backgroundColor: css("--p2"), borderRadius: 3, maxBarThickness: 34 }
+      ] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 300 },
+        interaction: { mode: "index", intersect: false },
+        plugins: { legend: { display: false }, tooltip: tipOpts() },
+        scales: { x: { stacked: true, grid: { display: false }, border: { display: false }, ticks: { color: ink2, font: { family: "Plus Jakarta Sans", size: 11 }, maxRotation: 0 } }, y: { stacked: true, beginAtZero: true, grid: { color: line }, border: { display: false }, ticks: { color: muted, precision: 0 } } }
+      }
+    });
+    const cmpL = ["Lots", "Dispatched", "Hold", "PPAP pending", "PPAP approved", "With PO"];
+    const cv = (p) => {
+      const l = L.filter((r) => r.project === p);
+      return [l.length, l.filter((r) => r.del === "Dispatched" || r.del === "Regular production").length, l.filter((r) => r.del === "Hold").length, l.filter((r) => r.stage === "PPAP").length, l.filter((r) => r.stage === "Approved for production").length, l.filter((r) => r.hasPO).length];
+    };
+    mk("chCmp", {
+      type: "bar",
+      data: { labels: cmpL, datasets: [{ label: "Earth Truss", data: cv("Earth Truss"), backgroundColor: css("--p1"), borderRadius: 3, maxBarThickness: 22 }, { label: "Anchor", data: cv("Anchor"), backgroundColor: css("--p2"), borderRadius: 3, maxBarThickness: 22 }] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 300 },
+        interaction: { mode: "index", intersect: false },
+        plugins: { legend: { display: false }, tooltip: tipOpts() },
+        scales: { x: { grid: { display: false }, border: { display: false }, ticks: { color: ink2, font: { family: "Plus Jakarta Sans", size: 11 }, maxRotation: 0, autoSkip: false } }, y: { beginAtZero: true, grid: { color: line }, border: { display: false }, ticks: { color: muted, precision: 0 } } }
+      }
+    });
     const since = addDays(todayStr, -60);
     const rec = L.filter((r) => r.dDate && r.dDate >= since).sort((a, b) => b.dDate.localeCompare(a.dDate));
     table("tRecent", [{ k: "dDate", l: "Date", f: fmtD, cls: "nw" }, { k: "project", l: "Project", f: projTag }, { k: "pn", l: "Part no", f: (v) => `<span class="mono">${esc(v)}</span>`, cls: "nw" }, { k: "pd", l: "Description", cls: "wr" }, { k: "qtyTxt", l: "Qty", n: 1 }, { k: "agent", l: "Agent" }, { k: "track", l: "Tracking", f: (v) => `<span class="mono">${esc(v)}</span>`, cls: "nw" }], rec, { empty: "No dispatches in the last 60 days for these filters." });
@@ -645,14 +688,6 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     later(() => renderAll());
   };
   [["f-ps", "ps"], ["f-stage", "stage"], ["f-del", "del"], ["f-po", "po"]].forEach(([id, k]) => $(id).onchange = (e) => setF(k, e.target.value));
-  $("f-from").onchange = (e) => {
-    F.from = e.target.value;
-    render();
-  };
-  $("f-to").onchange = (e) => {
-    F.to = e.target.value;
-    render();
-  };
   $("proj").querySelectorAll("button").forEach((b) => b.onclick = () => setF("proj", b.dataset.v));
   $("clear").onclick = clearAll;
   if (window.Chart) Chart.defaults.font.family = "Plus Jakarta Sans, system-ui, sans-serif";
@@ -805,6 +840,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     }
     paintImages();
     sendToDialog();
+    sendToTab();
   }
   function onSheetChange() {
     if (!busy) {
@@ -824,6 +860,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
       }
       window.__step = "loading part images";
       sendToDialog();
+      sendToTab();
       if (ok) {
         if (quiet) toast("Data Updated Successfully", "ok");
         loadImages(forceImages).catch(() => {
@@ -849,6 +886,44 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     b.classList.remove("spin");
     b.disabled = false;
   }
+  let tabWin = null;
+  function isWeb() {
+    try {
+      return Office.context.platform === Office.PlatformType.OfficeOnline;
+    } catch (e) {
+      return false;
+    }
+  }
+  function sendToTab() {
+    if (!tabWin || tabWin.closed || !lastSheets) return;
+    try {
+      tabWin.postMessage({ nx: "data", sheets: lastSheets, img: IMG, stamp: $("upd").textContent }, location.origin);
+    } catch (e) {
+    }
+  }
+  function openTab() {
+    let w = null;
+    try {
+      w = window.open(location.origin + location.pathname + "?mode=tab", "nxPartsFull");
+    } catch (e) {
+    }
+    if (!w) {
+      toast("The browser blocked the new tab. Allow pop-ups for this site, then press Open full screen again.", "err");
+      return;
+    }
+    tabWin = w;
+    setTimeout(sendToTab, 1200);
+  }
+  addEventListener("message", (e) => {
+    if (e.origin !== location.origin) return;
+    const d = e.data || {};
+    if (d.nx === "ready") {
+      tabWin = e.source;
+      sendToTab();
+    } else if (d.nx === "refresh") {
+      refreshData();
+    }
+  });
   function openBig() {
     Office.context.ui.displayDialogAsync(location.origin + location.pathname + "?mode=dialog", { height: 100, width: 100, displayInIframe: true }, (res) => {
       if (res.status !== Office.AsyncResultStatus.Succeeded) {
@@ -965,6 +1040,49 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
   __unboot();
   window.__step = "waiting for Excel";
   window.__officeReady.then((info) => {
+    if (MODE === "tab") {
+      window.__started = true;
+      toast("Waiting for data from Excel\u2026");
+      addEventListener("message", (e) => {
+        if (e.origin !== location.origin) return;
+        const d = e.data || {};
+        if (d.nx === "data") {
+          IMG = d.img || {};
+          loadSheets(d.sheets, String(d.stamp || "").replace("Last Updated: ", ""));
+          paintImages();
+          $("toast").hidden = true;
+          const rb = $("refBtn");
+          rb.classList.remove("spin");
+          rb.disabled = false;
+        }
+      });
+      const ping = () => {
+        try {
+          if (window.opener) window.opener.postMessage({ nx: "ready" }, location.origin);
+        } catch (e) {
+        }
+      };
+      ping();
+      let n = 0;
+      const iv = setInterval(() => {
+        if (started || ++n > 16) {
+          clearInterval(iv);
+          if (!started) banner(window.opener ? "This tab did not receive data from Excel. Keep the NX Parts Status panel open in Excel and press Open full screen again." : "Open this view from Excel: Home \u2192 NX Parts Status \u2192 Open full screen.", true);
+        } else ping();
+      }, 1500);
+      $("refBtn").onclick = () => {
+        const rb = $("refBtn");
+        rb.classList.add("spin");
+        rb.disabled = true;
+        toast("Refreshing Data...");
+        try {
+          window.opener.postMessage({ nx: "refresh" }, location.origin);
+        } catch (e) {
+          toast("Refresh from the Excel panel", "err");
+        }
+      };
+      return;
+    }
     if (MODE === "dialog") {
       window.__started = true;
       toast("Loading data\u2026");
@@ -998,8 +1116,12 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
       }, 2e3);
     } else if (info && info.host === Office.HostType.Excel) {
       $("refBtn").onclick = refreshData;
-      const canBig = Office.context.requirements.isSetSupported("DialogApi", "1.2");
-      if (canBig) {
+      const web = isWeb(), canBig = Office.context.requirements.isSetSupported("DialogApi", "1.2");
+      if (web) {
+        $("bigBtn").hidden = false;
+        $("bigBtn").textContent = "Open full screen (new tab)";
+        $("bigBtn").onclick = openTab;
+      } else if (canBig) {
         $("bigBtn").hidden = false;
         $("bigBtn").onclick = openBig;
       }
@@ -1007,7 +1129,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
       load(true).then((ok) => {
         if (ok) {
           $("toast").hidden = true;
-          if (canBig && !dlg) openBig();
+          if (!web && canBig && !dlg) openBig();
         } else window.__started = true;
       }).catch((e) => {
         window.__started = true;
