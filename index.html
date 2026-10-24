@@ -89,7 +89,8 @@ h1{font:700 32px/1.02 var(--f-num);letter-spacing:.03em;margin:6px 0 2px;text-wr
 @keyframes spin{to{transform:rotate(360deg)}}
 .toast{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:80;padding:10px 14px;border-radius:8px;font:600 13px var(--f-ui);box-shadow:0 6px 24px rgba(0,0,0,.18);background:var(--band);color:var(--band-ink);max-width:calc(100% - 32px)}
 .toast.ok{background:var(--good);color:#fff}.toast.err{background:var(--bad);color:#fff}
-.fbar{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-end}
+.filters{background:var(--surface);border-bottom:1px solid var(--line);box-shadow:var(--shadow);position:sticky;top:env(safe-area-inset-top,0px);z-index:30}
+.fbar{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-end;padding-block:10px}
 .fld{display:flex;flex-direction:column;gap:3px;min-width:0}
 .fld label,.lbl{font:500 10.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .fld select,.fld input,.ctl{font:500 13px var(--f-ui);color:var(--ink);background:var(--surface-2);border:1px solid var(--line-2);border-radius:7px;padding:5px 8px;height:32px;max-width:100%}
@@ -174,7 +175,7 @@ details.hid[open] summary::before{content:"▾ "}
 .kv div:nth-child(odd){color:var(--muted);font:500 11px var(--f-mono);text-transform:uppercase;letter-spacing:.05em;background:var(--surface-2);display:flex;align-items:center}
 body.cust .internal{display:none!important}
 @media (max-width:1150px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.c8,.c7,.c6,.c5,.c4{grid-column:span 12}.pipe{grid-template-columns:repeat(2,minmax(0,1fr))}.pipe button{border-bottom:1px solid var(--line)}}
-@media (max-width:640px){.wrap{padding-inline:16px}.hdr-r{align-items:flex-start}.hdr-btns{justify-content:flex-start}.upd{text-align:left}h1{font-size:24px}.kpi .v{font-size:26px}
+@media (max-width:640px){.wrap{padding-inline:16px}.filters{position:static}.hdr-r{align-items:flex-start}.hdr-btns{justify-content:flex-start}.upd{text-align:left}h1{font-size:24px}.kpi .v{font-size:26px}
   .fld{flex:1 1 44%}.fld select,.fld input,.gs input{width:100%}.kv{grid-template-columns:120px 1fr}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -194,6 +195,17 @@ body.cust .internal{display:none!important}
 </div></header>
 
 
+
+<section class="filters" id="filters" aria-label="Filters"><div class="wrap fbar">
+  <div class="fld gs"><label for="q">Search</label><input type="search" id="q" class="ctl" placeholder="Part no, description, PO, tracking…"></div>
+  <div class="fld"><label>Project</label><div class="seg" id="proj"><button type="button" data-v="All" aria-pressed="true">All</button><button type="button" data-v="Earth Truss" aria-pressed="false">Earth Truss</button><button type="button" data-v="Anchor" aria-pressed="false">Anchor</button></div></div>
+  <div class="fld"><label for="f-ps">Part status</label><select id="f-ps"></select></div>
+  <div class="fld"><label for="f-stage">Stage</label><select id="f-stage"></select></div>
+  <div class="fld"><label for="f-del">Delivery</label><select id="f-del"></select></div>
+  <div class="fld"><label for="f-po">PO</label><select id="f-po"><option value="All">All</option><option value="yes">PO received</option><option value="no">No PO</option></select></div>
+  <button class="btn" id="clear" type="button">Clear All Filters</button>
+  <div class="summary" id="summary"></div>
+</div></section>
 
 <main class="wrap" id="main">
   <div class="banner" id="banner" hidden></div>
@@ -216,16 +228,7 @@ body.cust .internal{display:none!important}
     <div class="legend"><span><b style="background:var(--p1)"></b>Earth Truss</span><span><b style="background:var(--p2)"></b>Anchor</span></div>
     <div class="chart" style="height:250px"><canvas id="chCmp" aria-label="Project comparison"></canvas></div></section>
 
-<section class="filters panel c12" id="filters" aria-label="Filters"><h2>Filters <small>apply to every KPI, chart and table above and below</small></h2><div class="fbar">
-  <div class="fld gs"><label for="q">Search</label><input type="search" id="q" class="ctl" placeholder="Part no, description, PO, tracking…"></div>
-  <div class="fld"><label>Project</label><div class="seg" id="proj"><button type="button" data-v="All" aria-pressed="true">All</button><button type="button" data-v="Earth Truss" aria-pressed="false">Earth Truss</button><button type="button" data-v="Anchor" aria-pressed="false">Anchor</button></div></div>
-  <div class="fld"><label for="f-ps">Part status</label><select id="f-ps"></select></div>
-  <div class="fld"><label for="f-stage">Stage</label><select id="f-stage"></select></div>
-  <div class="fld"><label for="f-del">Delivery</label><select id="f-del"></select></div>
-  <div class="fld"><label for="f-po">PO</label><select id="f-po"><option value="All">All</option><option value="yes">PO received</option><option value="no">No PO</option></select></div>
-  <button class="btn" id="clear" type="button">Clear All Filters</button>
-  <div class="summary" id="summary"></div>
-</div></section>
+
 
   <section class="panel c6"><h2>Recent dispatches <small>last 60 days, newest first</small></h2><div class="tbl scroll" id="tRecent" style="max-height:340px"></div></section>
   <section class="panel c6"><h2>Upcoming sample readiness <small>not yet dispatched · by readiness date</small></h2><div class="tbl scroll" id="tUp" style="max-height:340px"></div></section>
@@ -894,11 +897,14 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
       return false;
     }
   }
+  let tabAsks = 0, tabSends = 0;
   function sendToTab() {
-    if (!tabWin || tabWin.closed || !lastSheets) return;
+    if (!tabWin || !lastSheets) return;
     try {
-      tabWin.postMessage({ nx: "data", sheets: lastSheets, img: IMG, stamp: $("upd").textContent }, location.origin);
+      tabWin.postMessage({ nx: "data", sheets: lastSheets, img: IMG, stamp: $("upd").textContent }, "*");
+      tabSends++;
     } catch (e) {
+      toast("Could not send data to the full screen tab: " + e.message, "err");
     }
   }
   function openTab() {
@@ -915,10 +921,13 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     setTimeout(sendToTab, 1200);
   }
   addEventListener("message", (e) => {
-    if (e.origin !== location.origin) return;
     const d = e.data || {};
+    if (!d || typeof d !== "object" || !d.nx) return;
+    if (e.source !== tabWin && e.origin !== location.origin && e.origin !== "null") return;
     if (d.nx === "ready") {
       tabWin = e.source;
+      tabAsks++;
+      if (!lastSheets) return;
       sendToTab();
     } else if (d.nx === "refresh") {
       refreshData();
@@ -1043,10 +1052,13 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     if (MODE === "tab") {
       window.__started = true;
       toast("Waiting for data from Excel\u2026");
+      let got = 0, pings = 0;
       addEventListener("message", (e) => {
-        if (e.origin !== location.origin) return;
         const d = e.data || {};
+        if (!d || typeof d !== "object") return;
+        if (e.source !== window.opener && e.origin !== location.origin) return;
         if (d.nx === "data") {
+          got++;
           IMG = d.img || {};
           loadSheets(d.sheets, String(d.stamp || "").replace("Last Updated: ", ""));
           paintImages();
@@ -1058,7 +1070,10 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
       });
       const ping = () => {
         try {
-          if (window.opener) window.opener.postMessage({ nx: "ready" }, location.origin);
+          if (window.opener) {
+            window.opener.postMessage({ nx: "ready" }, "*");
+            pings++;
+          }
         } catch (e) {
         }
       };
@@ -1067,7 +1082,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
       const iv = setInterval(() => {
         if (started || ++n > 16) {
           clearInterval(iv);
-          if (!started) banner(window.opener ? "This tab did not receive data from Excel. Keep the NX Parts Status panel open in Excel and press Open full screen again." : "Open this view from Excel: Home \u2192 NX Parts Status \u2192 Open full screen.", true);
+          if (!started) banner(window.opener ? `This tab did not receive data from Excel. Keep the NX Parts Status panel open in Excel (wait until it shows the dashboard) and press Open full screen again. [diag: origin ${location.origin}, requests sent ${pings}, replies ${got}]` : "Open this view from Excel: Home \u2192 NX Parts Status \u2192 Open full screen. [diag: no link to the Excel panel]", true);
         } else ping();
       }, 1500);
       $("refBtn").onclick = () => {
@@ -1076,7 +1091,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
         rb.disabled = true;
         toast("Refreshing Data...");
         try {
-          window.opener.postMessage({ nx: "refresh" }, location.origin);
+          window.opener.postMessage({ nx: "refresh" }, "*");
         } catch (e) {
           toast("Refresh from the Excel panel", "err");
         }
