@@ -813,7 +813,14 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
   }
   function sendToDialog(sheets) {
     if (sheets) lastSheets = sheets;
-    if (!dlg || !lastSheets) return;
+    if (!dlg) return;
+    if (!lastSheets) {
+      try {
+        dlg.messageChild(JSON.stringify({ t: "wait", step: String(window.__step || "") }));
+      } catch (e) {
+      }
+      return;
+    }
     const s = JSON.stringify({ sheets: lastSheets, stamp }), size = 24e3, n = Math.ceil(s.length / size), id = Date.now();
     try {
       for (let i = 0; i < n; i++) dlg.messageChild(JSON.stringify({ id, i, n, s: s.slice(i * size, (i + 1) * size) }));
@@ -822,11 +829,17 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     }
   }
   const buf = {};
+  let gotMsg = 0, gotData = false;
   function onParentMsg(arg) {
     let m;
     try {
       m = JSON.parse(arg.message);
     } catch (e) {
+      return;
+    }
+    gotMsg++;
+    if (m.t === "wait") {
+      toast("Excel panel is still loading: " + m.step);
       return;
     }
     const b = buf[m.id] = buf[m.id] || { c: [], k: 0 };
@@ -837,6 +850,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     if (b.k === m.n) {
       const d = JSON.parse(b.c.join(""));
       delete buf[m.id];
+      gotData = true;
       loadSheets(d.sheets, d.stamp);
       $("toast").hidden = true;
       const rb = $("refBtn");
@@ -856,13 +870,42 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
         rb.disabled = true;
         Office.context.ui.messageParent("refresh");
       };
-      Office.context.ui.addHandlerAsync(Office.EventType.DialogParentMessageReceived, onParentMsg, () => Office.context.ui.messageParent("ready"));
+      let pings = 0;
+      const ping = () => {
+        try {
+          Office.context.ui.messageParent("ready");
+          pings++;
+        } catch (e) {
+        }
+      };
+      Office.context.ui.addHandlerAsync(Office.EventType.DialogParentMessageReceived, onParentMsg, ping);
+      let n = 0;
+      const iv = setInterval(() => {
+        if (gotData) {
+          clearInterval(iv);
+          return;
+        }
+        if (++n > 20) {
+          clearInterval(iv);
+          banner("Full screen did not receive data from the Excel panel. Close this window, check the side panel shows the dashboard, then press Open full screen again. [diag: requests " + pings + ", replies " + gotMsg + "]", true);
+          return;
+        }
+        ping();
+      }, 2e3);
     } else if (info && info.host === Office.HostType.Excel) {
       $("refBtn").onclick = () => loadFromExcel();
       if (Office.context.requirements.isSetSupported("DialogApi", "1.2")) {
         $("bigBtn").hidden = false;
         $("bigBtn").onclick = openBig;
       }
+      const stepT = setInterval(() => {
+        if (window.__started) {
+          clearInterval(stepT);
+          return;
+        }
+        const t = $("toast");
+        if (!t.hidden && !t.className.includes("err")) t.textContent = "Loading data\u2026 " + window.__step;
+      }, 700);
       loadFromExcel();
     } else {
       window.__started = true;
